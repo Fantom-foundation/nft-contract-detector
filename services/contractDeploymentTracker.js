@@ -8,10 +8,11 @@ const nodeIndex = Utils.NodeIndex
 let currentBlock = startBlock
 const TrackContractDeployment = async () => {
   const func = async () => {
-    console.log(currentBlock)
     let remainder = currentBlock % nodeLimit
-    if (remainder == nodeIndex) await Utils.analyzeBlock(currentBlock)
-    currentBlock += nodeLimit
+    if (remainder == nodeIndex) {
+      let isSuccessful = await Utils.analyzeBlock(currentBlock)
+      if (isSuccessful) currentBlock += nodeLimit
+    }
     setTimeout(async () => {
       await func()
     }, 1000 * 2)

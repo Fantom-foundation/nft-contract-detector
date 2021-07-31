@@ -6,7 +6,7 @@ const NFTCONTRACT = mongoose.model('NFTCONTRACT')
 const InterfaceID = require('../constants/abi_interface_id')
 const NodeLimit = 10
 const NodeIndex = parseInt(process.env.NODEINDEX)
-const startBlock = 6728593
+const startBlock = 3672782
 const INTERFACEID_1155 = 0xd9b67a26
 const INTERFACEID_721 = 0x80ac58cd
 const provider = new ethers.providers.JsonRpcProvider(
@@ -15,31 +15,35 @@ const provider = new ethers.providers.JsonRpcProvider(
 )
 
 const analyzeBlock = async (blockNumber) => {
-  let blockInfo = await provider.getBlockWithTransactions(blockNumber)
-  let txs = blockInfo.transactions
-  if (txs.length > 0) {
-    let deployedAddresses = []
-    txs.map((tx) => {
-      if (tx.creates) deployedAddresses.push(tx.creates)
-    })
-    if (deployedAddresses.length > 0) {
-      let contracts = await analyzeContracts(deployedAddresses)
-      if (contracts.length > 0) {
-        let data = []
-        contracts.map((contract) => {
-          data.push({
-            address: contract[0],
-            type: contract[1],
-            blockNumber: blockNumber,
+  try {
+    let blockInfo = await provider.getBlockWithTransactions(blockNumber)
+    let txs = blockInfo.transactions
+    if (txs.length > 0) {
+      let deployedAddresses = []
+      txs.map((tx) => {
+        if (tx.creates) deployedAddresses.push(tx.creates)
+      })
+      if (deployedAddresses.length > 0) {
+        let contracts = await analyzeContracts(deployedAddresses)
+        if (contracts.length > 0) {
+          let data = []
+          contracts.map((contract) => {
+            data.push({
+              address: contract[0],
+              type: contract[1],
+              blockNumber: blockNumber,
+            })
           })
-        })
-        try {
-          await NFTCONTRACT.insertMany(data)
-        } catch (error) {}
-      }
-    } else return null
+          try {
+            await NFTCONTRACT.insertMany(data)
+          } catch (error) {}
+        }
+      } else return null
+    }
+    return true
+  } catch (error) {
+    return false
   }
-  return null
 }
 
 const analyzeContracts = async (addresses) => {
