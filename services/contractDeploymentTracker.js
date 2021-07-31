@@ -1,18 +1,15 @@
 require('dotenv').config()
 const Utils = require('./utils')
 
-const startBlock = Utils.startBlock
-const nodeLimit = Utils.NodeLimit
 const nodeIndex = Utils.NodeIndex
+const startBlock = Utils.startBlock + nodeIndex
+const nodeLimit = Utils.NodeLimit
 
 let currentBlock = startBlock
 const TrackContractDeployment = async () => {
   const func = async () => {
-    let remainder = currentBlock % nodeLimit
-    if (remainder == nodeIndex) {
-      let isSuccessful = await Utils.analyzeBlock(currentBlock)
-      if (isSuccessful) currentBlock += nodeLimit
-    }
+    let isSuccessful = await Utils.analyzeBlock(currentBlock)
+    if (isSuccessful) currentBlock += nodeLimit
     setTimeout(async () => {
       await func()
     }, 1000 * 2)
