@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const NFTCONTRACT = mongoose.model('NFTCONTRACT')
 
 const InterfaceID = require('../constants/abi_interface_id')
+const NameSymbolABI = require('../constants/abi_name_symbol')
 const NodeLimit = 10
 const NodeIndex = parseInt(process.env.NODEINDEX)
 const startBlock = 12235620 // block from our latest artion deployment
@@ -72,6 +73,25 @@ const guessContractType = async (address) => {
     return 20
   }
 }
+
+const trackNameAndSymbol = async () => {
+  try {
+    let contract = await NFTCONTRACT.findOne({ name: null })
+    if (contract) {
+      let sc = new ethers.Contract(contract.address, NameSymbolABI, provider)
+      let name = await sc.name()
+      let symbol = await sc.symbol()
+      contract.name = name
+      contract.symbol = symbol
+      await contract.save()
+    }
+  } catch (error) {}
+
+  setTimeout(async () => {
+    await trackNameAndSymbol()
+  }, 1000 * 5)
+}
+
 const toLowerCase = (val) => {
   if (val) return val.toLowerCase()
   else return val
@@ -92,6 +112,7 @@ const Utils = {
   startBlock,
   NodeLimit,
   NodeIndex,
+  trackNameAndSymbol,
 }
 
 module.exports = Utils
